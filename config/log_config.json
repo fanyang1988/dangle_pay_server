@@ -1,0 +1,12 @@
+{
+    "logger" : [{
+        "name"  : "http",
+        "type"  : "dateFile",
+        "level" : "info",
+        "path"  : "./info.log"
+    },{
+        "name"  : "http",
+        "type"  : "console",
+        "level" : "debug"
+    }]
+}
