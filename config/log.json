@@ -3,7 +3,9 @@
         "name"  : "http",
         "type"  : "dateFile",
         "level" : "info",
-        "path"  : "./info.log"
+        "path"  : "./log/http",
+        "format": "-2006-01-02.log",
+        "max"   : "1024000"
     },{
         "name"  : "http",
         "type"  : "console",

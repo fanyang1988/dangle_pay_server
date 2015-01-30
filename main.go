@@ -1,85 +1,25 @@
 package main
 
 import (
-    "fmt"
     "github.com/fanyang1988/goconfig"
-    gologger "github.com/fanyang1988/gologger"
+    "github.com/fanyang1988/gologger"
     _ "github.com/icattlecoder/godaemon"
-    "io/ioutil"
-    "net/http"
-    "net/url"
-    "strconv"
-    "strings"
 )
 
-func onPay(param map[string]string) (re string, err error) {
-    fmt.Printf("onPay %s\n", param)
-    ext, ext_ok := param["ext"]
-    money, money_ok := param["money"]
-    if ext_ok && money_ok {
-        fmt.Printf("ext %s\n", ext)
-        ext_info := strings.Split(ext, "|")
-        if len(ext_info) < 4 {
-            return "failed ext_info", nil
-        }
-        fmt.Printf("url %s\n", ext_info[0])
-        fmt.Printf("uid %s\n", ext_info[1])
-        fmt.Printf("gid %s\n", ext_info[2])
-        fmt.Printf("money %s\n", money)
+var (
+    ConfigManager = goconfig.New()
+    LogManager    = gologger.New("logger", "./config/log.json", ConfigManager)
+)
 
-        money_float, money_float_err := strconv.ParseFloat(money, 10)
-        if money_float_err != nil {
-            return money_float_err.Error(), nil
-        }
-
-        u, _ := url.Parse(ext_info[0])
-        q := u.Query()
-
-        q.Set("app_key", "cc5a0304d4efa71a07cde121d20fdb54")
-        q.Set("product_id", ext_info[2])
-        q.Set("amount", strconv.FormatInt(int64(money_float*100), 10))
-        q.Set("app_uid", ext_info[1])
-        q.Set("order_id", ext_info[3])
-        q.Set("user_id", ext_info[1])
-        q.Set("gateway_flag", "success")
-        q.Set("app_order_id", ext_info[3])
-
-        u.RawQuery = q.Encode()
-        //TODO timeout
-        url_toget := u.String()
-        fmt.Printf("url %s\n", url_toget)
-        res, err := http.Get(url_toget)
-        if err != nil {
-            return "get failed", nil
-        }
-        result, err := ioutil.ReadAll(res.Body)
-        res.Body.Close()
-
-        if err != nil {
-            return "read failed", nil
-        }
-        fmt.Printf("result %s\n", result)
-
-        return "success", nil
-    }
-    return "failed", nil
+func init() {
 }
 
 func main() {
-    fmt.Printf("dangle_pay_server start\n")
-    configMng := goconfig.NewConfig()
-    defer configMng.Close()
-
-    logMng := gologger.NewLog("logger", "./config/log_config.json", configMng)
-
-    logMng.Init()
-    defer logMng.Close()
-    fmt.Printf("dangle_pay_server logMng Init\n")
+    defer ConfigManager.Close()
+    defer LogManager.Close()
 
     mng := &HttpHanderManager{
         handers: make(map[string]*HttpHander),
-        config:  configMng,
-        logger:  logMng.GetLogger("http"),
     }
 
     mng.handers["pay"] = &HttpHander{
